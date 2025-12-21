@@ -3,25 +3,24 @@
 ![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)
 ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-green.svg)
 ![MediaPipe](https://img.shields.io/badge/MediaPipe-Latest-orange.svg)
-![Flask](https://img.shields.io/badge/Flask-2.x-red.svg)
 
-**Tugas Pengolahan Citra Digital** - Sistem monitoring ujian otomatis menggunakan Computer Vision & Face Tracking.
+**Tugas Pengolahan Citra Digital** - Sistem monitoring ujian otomatis menggunakan Computer Vision & Face Tracking dengan integrasi web quiz.
 
 ## 🚀 Fitur Utama
 
 ### ⭐ Core Features
 
 - **Real-time Face Tracking** - Deteksi posisi wajah menggunakan MediaPipe Face Mesh
-- **Cheat Detection** - Otomatis mendeteksi tengok kiri/kanan/nunduk
+- **Cheat Detection** - Otomatis mendeteksi tengok kiri/kanan/nunduk dengan threshold yang dapat dikustomisasi
 - **Live Counter** - Hitung jumlah pelanggaran secara real-time
 
-### 🔥 Advanced Features (BARU!)
+### 🔥 Advanced Features
 
 1. **🔊 Alert Sound System** - Bunyi alarm otomatis saat mencontek terdeteksi
 2. **📸 Auto Screenshot Capture** - Screenshot otomatis + timestamp saat pelanggaran
-3. **👤 Face Recognition** - Verifikasi identitas peserta ujian (anti-joki)
-4. **📊 Interactive Timeline Graph** - Visualisasi pola kecurangan dengan matplotlib
-5. **🌐 Real-time Dashboard** - Web dashboard dengan Flask untuk monitoring
+3. **🌐 Browser Tab Integration** - Integrasi dengan web quiz untuk auto-submit
+4. **📏 Always On Top Window** - Window monitoring tetap di atas untuk mencegah disembunyikan
+5. **⏱️ Smart Cooldown System** - Delay 5 detik antar deteksi untuk menghindari false positive
 
 ## 📋 Requirements
 
@@ -29,24 +28,18 @@
 pip install opencv-python
 pip install mediapipe
 pip install numpy
-pip install matplotlib
-pip install flask
-pip install opencv-contrib-python
+pip install pyautogui
 ```
 
 ## 🎯 Cara Penggunaan
 
-### 1️⃣ Setup Face Recognition (Opsional)
+### 1️⃣ Setup URL Web Quiz
 
-Untuk mengaktifkan verifikasi identitas:
+Edit `main.py` pada line ~62:
 
-```bash
-python register_face.py
+```python
+url_target = 'http://localhost:5173/'  # Ganti dengan URL quiz kamu
 ```
-
-- Masukkan nama Anda
-- Ambil 30 foto wajah dari berbagai sudut
-- Model akan tersimpan otomatis
 
 ### 2️⃣ Jalankan Sistem Deteksi
 
@@ -57,59 +50,69 @@ python main.py
 **Kontrol:**
 
 - `Q` - Keluar dari program
-- Sistem akan otomatis:
-  - ✅ Merekam timeline pelanggaran
-  - ✅ Mengambil screenshot
-  - ✅ Membunyikan alarm
-  - ✅ Verifikasi wajah (jika sudah registrasi)
+- Window size: 640x360 (dapat diubah di line ~100)
+- Always on top: Aktif secara default
 
-### 3️⃣ Visualisasi Timeline
+**Sistem akan otomatis:**
 
-Setelah ujian selesai, lihat grafik interaktif:
+- ✅ Mendeteksi tengok kiri/kanan (threshold: 15°)
+- ✅ Mendeteksi nunduk (threshold: 8°)
+- ✅ Mengambil screenshot ke folder `screenshots/`
+- ✅ Membunyikan alarm beep
+- ✅ Membuka-tutup tab browser untuk trigger auto-submit
+- ✅ Cooldown 5 detik antar deteksi
 
-```bash
-python visualize_timeline.py
+### 3️⃣ Setelah Ujian
+
+Program akan menampilkan ringkasan:
+
+```
+==================================================
+RINGKASAN UJIAN
+==================================================
+User: Peserta
+Durasi Total: 15:30
+Jumlah Mencontek: 3x
+Screenshots Diambil: 3
+==================================================
 ```
 
-Akan menampilkan:
+## ⚙️ Kustomisasi
 
-- Timeline scatter plot pelanggaran
-- Bar chart distribusi jenis pelanggaran
-- Statistik lengkap sesi ujian
+### Ubah Threshold Deteksi
 
-### 4️⃣ Dashboard Web (Real-time Monitoring)
+Di `main.py` line ~180:
 
-Untuk monitoring multiple sessions:
-
-```bash
-python dashboard.py
+```python
+thresh_y = 15  # Tengok kiri/kanan (default: 15°)
+thresh_x = 8   # Nunduk (default: 8°)
 ```
 
-Buka browser: **http://localhost:5000**
+### Ubah Cooldown Timer
 
-**Dashboard Features:**
+Di `main.py` line ~194:
 
-- 📊 Statistik keseluruhan (total sessions, violations, avg)
-- 📝 List semua session ujian
-- ⏱️ Timeline latest session
-- 🔄 Auto-refresh setiap 10 detik
+```python
+if curangSekarang and (waktuSekarang - waktuTerakhirMencontek) > 5:  # 5 detik
+```
+
+### Ubah Ukuran Window
+
+Di `main.py` line ~100:
+
+```python
+cv2.resizeWindow(window_name, 640, 360)  # (width, height)
+```
 
 ## 📁 Struktur Project
 
 ```
 deteksi-mencontek/
 ├── main.py                    # Program utama
-├── register_face.py           # Setup face recognition
-├── visualize_timeline.py      # Grafik timeline
-├── dashboard.py               # Flask web dashboard
-├── templates/
-│   └── dashboard.html         # Template dashboard
-├── data/                      # Data session (JSON)
 ├── screenshots/               # Screenshot pelanggaran
-├── known_faces/               # Model face recognition
-│   ├── face_model.yml
-│   └── face_data.pkl
-└── README.md
+├── docs/                      # Dokumentasi
+│   └── README.md
+└── .gitignore
 ```
 
 ## 🎨 Tampilan
@@ -120,74 +123,66 @@ deteksi-mencontek/
 - **Face Mesh**: Visualisasi 468 landmark points
 - **Direction Arrow**: Indikator arah pandangan
 - **Counters**: Durasi, jumlah mencontek, screenshots
+- **Always On Top**: Window pinned di atas untuk monitoring ketat
 
-### Dashboard Web
+## 🔧 Cara Kerja Integrasi Web Quiz
 
-- **Stats Cards**: Total sessions, violations, averages
-- **Timeline Panel**: Kronologis pelanggaran
-- **Sessions List**: History semua ujian
-- **Responsive Design**: Support mobile & desktop
+1. **Deteksi Kecurangan** → Sistem mendeteksi tengok/nunduk
+2. **Trigger Action** → Buka-tutup 1 tab browser ke URL quiz
+3. **Focus Change Event** → Web quiz detect tab switch
+4. **Auto Submit** → Setelah 5x focus change, quiz otomatis submit
 
-## 🔧 Konfigurasi
+### Setup di Web Quiz
 
-Edit di `main.py`:
+Web quiz harus implement detection focus change:
 
-```python
-# Threshold deteksi
-thresh_y = 7   # Sensitivitas kiri/kanan (default: 7)
-thresh_x = 3   # Sensitivitas nunduk (default: 3)
+```javascript
+let focusChangeCount = 0;
 
-# Cooldown deteksi
-waktuTerakhirMencontek > 2  # Interval deteksi (detik)
-
-# Index kamera
-cap = cv2.VideoCapture(2)  # 0=default, 1,2,3=external
+window.addEventListener("blur", function () {
+  focusChangeCount++;
+  if (focusChangeCount >= 5) {
+    submitQuiz(); // Auto submit
+  }
+});
 ```
 
 ## 📊 Output Data
-
-### JSON Session Data (`data/session_TIMESTAMP.json`)
-
-```json
-{
-  "timestamp": "20251204_143025",
-  "durasi_total": 120.5,
-  "jumlah_mencontek": 7,
-  "user_name": "John Doe",
-  "timeline": [
-    {
-      "waktu": 15.2,
-      "jenis": "TENGOK KIRI (CURANG!)",
-      "timestamp": "2025-12-04T14:30:40"
-    }
-  ]
-}
-```
 
 ### Screenshots
 
 Format: `YYYYMMDD_HHMMSS_STATUS.jpg`
 
 - Contoh: `20251204_143045_TENGOK_KANAN.jpg`
+- Lokasi: `screenshots/` folder
+
+### Console Output
+
+```
+[INFO] Cyber Proctor siap. Tekan 'Q' untuk keluar.
+[INFO] Ujian dimulai!
+[WARNING] Terdeteksi mencontek! Total: 1x
+[SCREENSHOT] Disimpan: screenshots/20251221_143045_TENGOK_KANAN.jpg
+[ACTION] Buka-tutup 1 tab browser untuk trigger auto-submit!
+```
 
 ## 🛡️ Teknologi
 
-| Komponen         | Teknologi                           |
-| ---------------- | ----------------------------------- |
-| Face Detection   | MediaPipe Face Mesh (468 landmarks) |
-| Face Recognition | OpenCV LBPH Recognizer              |
-| Pose Estimation  | solvePnP 3D → 2D projection         |
-| Visualization    | Matplotlib + Seaborn                |
-| Web Framework    | Flask + HTML/CSS/JS                 |
-| Alert System     | Windows winsound                    |
+| Komponen        | Teknologi                           |
+| --------------- | ----------------------------------- |
+| Face Detection  | MediaPipe Face Mesh (468 landmarks) |
+| Pose Estimation | solvePnP 3D → 2D projection         |
+| Alert System    | Windows winsound beep               |
+| Browser Control | webbrowser + pyautogui              |
+| Screenshot      | OpenCV imwrite                      |
 
 ## 🎓 Use Cases
 
-✅ **Ujian Online** - Monitor peserta ujian jarak jauh
-✅ **Proctoring System** - Sistem pengawasan otomatis
-✅ **Research** - Dataset perilaku ujian
-✅ **Demo** - Presentasi computer vision
-✅ **Learning** - Belajar face tracking & pose estimation
+✅ **Ujian Online** - Monitor peserta ujian jarak jauh dengan auto-submit
+✅ **Proctoring System** - Sistem pengawasan otomatis terintegrasi
+✅ **Research** - Dataset perilaku ujian dan deteksi kecurangan
+✅ **Demo** - Presentasi computer vision dan automation
+✅ **Learning** - Belajar face tracking & browser automation
 
 ## 🐛 Troubleshooting
 
@@ -197,24 +192,35 @@ Format: `YYYYMMDD_HHMMSS_STATUS.jpg`
 cap = cv2.VideoCapture(0)  # Coba index 0, 1, atau 2
 ```
 
-**Face recognition tidak akurat:**
+**Browser tidak terbuka:**
 
-- Ambil lebih banyak foto saat registrasi (30-50)
-- Pastikan pencahayaan cukup
-- Coba adjust confidence threshold
+- Pastikan ada default browser di sistem
+- Cek apakah URL quiz sudah benar
+- Test manual: `python -c "import webbrowser; webbrowser.open('http://localhost:5173/')"`
+
+**Tab tidak tertutup otomatis:**
+
+- Pastikan `pyautogui` terinstall
+- Browser harus dalam focus saat `Ctrl+W` ditekan
+- Delay 0.3 detik mungkin perlu diubah jika koneksi lambat
 
 **Sound tidak keluar:**
 
-- Windows: Pastikan `winsound` terinstall
-- Linux/Mac: Ganti dengan `playsound` atau `pygame`
+- Windows: Pastikan volume tidak mute
+- Check: `python -c "import winsound; winsound.Beep(1000, 300)"`
+
+**Terlalu sensitif:**
+
+- Naikin threshold: `thresh_y = 20` dan `thresh_x = 10`
+- Naikin cooldown: `> 10` (10 detik)
 
 ## 📈 Future Improvements
 
-- [ ] Multi-person detection (detect kolaborasi curang)
-- [ ] Eye tracking (deteksi arah pandang mata)
-- [ ] Blur detection (deteksi kamera ditutup)
-- [ ] WebSocket untuk real-time streaming
-- [ ] Export report PDF
+- [ ] Multi-person detection untuk detect kolaborasi
+- [ ] Eye tracking untuk deteksi arah pandang mata
+- [ ] Configurable settings via JSON/YAML
+- [ ] Log file untuk audit trail
+- [ ] Email notification saat pelanggaran
 - [ ] Integration dengan LMS (Moodle, Canvas)
 
 ## 👨‍💻 Author
